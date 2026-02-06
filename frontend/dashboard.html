@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - DeepFake Detector</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-shield-alt"></i>
+                <span>DeepFake Detector</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard.html" class="nav-item active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/upload.html" class="nav-item">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload & Detect</span>
+                </a>
+                <a href="/history.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </a>
+                <a href="#" class="nav-item" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="user-name">Loading...</span>
+                </div>
+            </header>
+
+            <!-- Welcome Section -->
+            <section class="welcome-section">
+                <div class="welcome-card">
+                    <h2>Welcome back, <span id="welcome-name"></span>! 👋</h2>
+                    <p>Ready to detect some deepfakes?</p>
+                    <a href="/upload.html" class="btn-primary">
+                        <i class="fas fa-upload"></i> Upload File
+                    </a>
+                </div>
+            </section>
+
+            <!-- Statistics Cards -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-detections">0</h3>
+                            <p>Total Detections</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="fake-detected">0</h3>
+                            <p>Fake Detected</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="real-detected">0</h3>
+                            <p>Real Detected</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Detections -->
+            <section class="recent-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-clock"></i> Recent Detections</h2>
+                    <a href="/history.html" class="view-all">View All</a>
+                </div>
+                
+                <div class="recent-table-container">
+                    <table class="recent-table" id="recent-table">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Type</th>
+                                <th>Prediction</th>
+                                <th>Confidence</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-tbody">
+                            <tr class="loading-row">
+                                <td colspan="5" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/js/config.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Load dashboard data
+        async function loadDashboard() {
+            // Protect page
+            const session = await protectPage();
+            if (!session) return;
+
+            // Update user name
+            document.getElementById('user-name').textContent = session.user_name;
+            document.getElementById('welcome-name').textContent = session.user_name;
+
+            // Load statistics
+            await loadStats();
+
+            // Load recent detections
+            await loadRecentDetections();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await apiCall(API_ENDPOINTS.DETECTION.STATS);
+                const data = await response.json();
+
+                document.getElementById('total-detections').textContent = data.total_detections || 0;
+                document.getElementById('fake-detected').textContent = data.fake_detected || 0;
+                document.getElementById('real-detected').textContent = data.real_detected || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadRecentDetections() {
+            try {
+                const response = await apiCall(API_ENDPOINTS.DETECTION.HISTORY + '?per_page=5');
+                const data = await response.json();
+
+                const tbody = document.getElementById('recent-tbody');
+                
+                if (data.history && data.history.length > 0) {
+                    tbody.innerHTML = data.history.map(item => `
+                        <tr>
+                            <td>
+                                <i class="fas fa-${item.file_type === 'image' ? 'image' : 'video'}"></i>
+                                ${item.file_name}
+                            </td>
+                            <td><span class="badge badge-${item.file_type}">${item.file_type}</span></td>
+                            <td>
+                                <span class="badge badge-${item.prediction}">
+                                    ${item.prediction === 'fake' ? '⚠️ Fake' : '✓ Real'}
+                                </span>
+                            </td>
+                            <td>${item.confidence}%</td>
+                            <td>${new Date(item.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center">
+                                <p style="padding: 20px; color: #666;">
+                                    No detections yet. <a href="/upload.html">Upload your first file</a>
+                                </p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading recent detections:', error);
+                document.getElementById('recent-tbody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center error">
+                            Error loading detections
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
+</body>
+</html>

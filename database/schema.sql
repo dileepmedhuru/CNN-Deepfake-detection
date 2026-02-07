@@ -26,8 +26,12 @@ CREATE TABLE IF NOT EXISTS detection_history (
 );
 
 -- Create default admin user
-INSERT OR IGNORE INTO users (id, full_name, email, password, is_admin) 
-VALUES (1, 'Admin', 'admin@deepfake.com', 'admin123', 1);
+INSERT OR IGNORE INTO users (id, full_name, email, password, is_admin, is_verified) 
+VALUES (1, 'Admin User', 'admin@deepfake.com', 'admin123', 1, 1);
+
+-- Create default test user
+INSERT OR IGNORE INTO users (id, full_name, email, password, is_admin, is_verified) 
+VALUES (2, 'Test User', 'test@example.com', 'test123', 0, 1);
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

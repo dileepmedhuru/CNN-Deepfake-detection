@@ -12,7 +12,9 @@ processed_dataset/
 # Deepfake dataset (Celeb-DF)
 Celeb-DF-v1/
 
-uploads/
+backend/uploads/
 
 # Trained CNN model
-backend/ml_models/cnn_model.h5
+ml_models/cnn_model.h5
+
+database/deepfake.db

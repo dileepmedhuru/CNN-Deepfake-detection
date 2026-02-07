@@ -18,19 +18,39 @@ def create_app(config_name='development'):
     db.init_app(app)
     CORS(app)  # Enable CORS for all routes
     
-    # Register blueprints
-    from auth_routes import auth_bp
-    from detection_routes import detection_bp
-    from admin_routes import admin_bp
+    # Create necessary directories
+    os.makedirs('uploads/images', exist_ok=True)
+    os.makedirs('uploads/videos', exist_ok=True)
     
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(detection_bp)
-    app.register_blueprint(admin_bp)
+    # Register blueprints
+    try:
+        from auth_routes import auth_bp
+        app.register_blueprint(auth_bp)
+        print("✓ Auth routes registered")
+    except Exception as e:
+        print(f"✗ Error registering auth routes: {e}")
+    
+    try:
+        from detection_routes import detection_bp
+        app.register_blueprint(detection_bp)
+        print("✓ Detection routes registered")
+    except Exception as e:
+        print(f"✗ Error registering detection routes: {e}")
+    
+    try:
+        from admin_routes import admin_bp
+        app.register_blueprint(admin_bp)
+        print("✓ Admin routes registered")
+    except Exception as e:
+        print(f"✗ Error registering admin routes: {e}")
     
     # Create database tables
     with app.app_context():
-        db.create_all()
-        print("Database tables created successfully")
+        try:
+            db.create_all()
+            print("✓ Database tables created successfully")
+        except Exception as e:
+            print(f"✗ Database error: {e}")
     
     # Serve frontend files
     @app.route('/')
@@ -57,5 +77,6 @@ if __name__ == '__main__':
     print("=" * 60)
     print("📡 Server: http://localhost:5000")
     print("👤 Admin: admin@deepfake.com / admin123")
+    print("📝 User:  test@example.com / test123")
     print("=" * 60)
     app.run(host='0.0.0.0', port=5000, debug=True)

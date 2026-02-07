@@ -1,10 +1,17 @@
 import os
 from datetime import timedelta
+from pathlib import Path
+
+# Get the absolute path to the project root
+BASE_DIR = Path(__file__).resolve().parent.parent  # Goes up from backend/ to project root
 
 class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-12345'
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///../database/deepfake.db'
+    
+    # Database path - absolute path to database/deepfake.db
+    DATABASE_PATH = BASE_DIR / 'database' / 'deepfake.db'
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{DATABASE_PATH}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT Configuration
@@ -17,12 +24,16 @@ class Config:
     ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
     ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'flv', 'wmv'}
     
-    # Model Configuration
-    MODEL_PATH = 'ml_models/cnn_model.h5'
+    # Model Configuration - absolute path
+    MODEL_PATH = BASE_DIR / 'ml_models' / 'cnn_model.h5'
     
     @staticmethod
     def init_app(app):
-        pass
+        # Ensure database directory exists
+        db_dir = BASE_DIR / 'database'
+        db_dir.mkdir(exist_ok=True)
+        print(f"📁 Database directory: {db_dir}")
+        print(f"📁 Database file: {Config.DATABASE_PATH}")
 
 class DevelopmentConfig(Config):
     """Development configuration"""

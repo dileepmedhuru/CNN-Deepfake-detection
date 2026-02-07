@@ -15,7 +15,7 @@ def verify_admin():
 
 @admin_bp.route('/users', methods=['GET'])
 def get_all_users():
-    """Get all users (admin only) - INCLUDES PASSWORDS!"""
+    """Get all users (admin only)"""
     admin = verify_admin()
     if not admin:
         return jsonify({'error': 'Unauthorized - Admin access required'}), 403
@@ -23,11 +23,10 @@ def get_all_users():
     try:
         users = User.query.all()
         
-        # Include detection count and PASSWORD for each user
+        # Include detection count for each user
         users_data = []
         for user in users:
             user_dict = user.to_dict()
-            user_dict['password'] = user.password  # SHOW PASSWORD TO ADMIN
             user_dict['detection_count'] = Detection.query.filter_by(user_id=user.id).count()
             users_data.append(user_dict)
         
@@ -36,6 +35,7 @@ def get_all_users():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_all_users: {e}")
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/user/<int:user_id>', methods=['GET'])
@@ -54,7 +54,6 @@ def get_user_detail(user_id):
         detections = Detection.query.filter_by(user_id=user_id).all()
         
         user_data = user.to_dict()
-        user_data['password'] = user.password  # Include password for admin
         user_data['detections'] = [d.to_dict() for d in detections]
         user_data['detection_count'] = len(detections)
         
@@ -63,6 +62,7 @@ def get_user_detail(user_id):
         }), 200
         
     except Exception as e:
+        print(f"Error in get_user_detail: {e}")
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/detections', methods=['GET'])
@@ -94,6 +94,7 @@ def get_all_detections():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_all_detections: {e}")
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/stats', methods=['GET'])
@@ -117,6 +118,7 @@ def get_admin_stats():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_admin_stats: {e}")
         return jsonify({'error': str(e)}), 500
 
 @admin_bp.route('/dashboard-stats', methods=['GET'])
@@ -140,4 +142,5 @@ def get_dashboard_stats():
         }), 200
         
     except Exception as e:
+        print(f"Error in get_dashboard_stats: {e}")
         return jsonify({'error': str(e)}), 500

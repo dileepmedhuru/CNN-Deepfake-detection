@@ -2,8 +2,9 @@ from database import db
 from datetime import datetime
 
 class User(db.Model):
-    """User model - Simple version with plain text passwords"""
+    """User model - matches schema.sql structure"""
     __tablename__ = 'users'
+    __table_args__ = {'extend_existing': True}  # Allow table redefinition
     
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
@@ -29,8 +30,9 @@ class User(db.Model):
         }
 
 class Detection(db.Model):
-    """Detection history model"""
+    """Detection history model - matches schema.sql structure"""
     __tablename__ = 'detection_history'
+    __table_args__ = {'extend_existing': True}  # Allow table redefinition
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -40,7 +42,8 @@ class Detection(db.Model):
     result = db.Column(db.String(10), nullable=False)  # 'real' or 'fake'
     confidence = db.Column(db.Float, nullable=False)
     processing_time = db.Column(db.Float, nullable=False)
-    metadata = db.Column(db.Text)  # JSON string
+    # RENAMED: metadata → extra_data (metadata is reserved in SQLAlchemy)
+    extra_data = db.Column('metadata', db.Text)  # Column name in DB is still 'metadata'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
@@ -54,6 +57,6 @@ class Detection(db.Model):
             'result': self.result,
             'confidence': round(self.confidence, 2),
             'processing_time': round(self.processing_time, 2),
-            'metadata': self.metadata,
+            'metadata': self.extra_data,  # Return as 'metadata' in JSON
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

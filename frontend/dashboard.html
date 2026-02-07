@@ -3,208 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - DeepFake Detector</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Dashboard - Deepfake Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-shield-alt"></i>
-                <span>DeepFake Detector</span>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🔍 Deepfake Detector</h1>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard.html" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/upload.html" class="nav-item">
-                    <i class="fas fa-upload"></i>
-                    <span>Upload & Detect</span>
-                </a>
-                <a href="/history.html" class="nav-item">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </nav>
-        </aside>
+            <div class="nav-links">
+                <span id="user-name" class="user-name"></span>
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="upload.html">New Detection</a>
+                <a href="history.html">History</a>
+                <button onclick="logout()" class="btn btn-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="dashboard-header">
-                <h1>Dashboard</h1>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="user-name">Loading...</span>
-                </div>
-            </header>
+    <div class="dashboard-container">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>Welcome, <span id="welcome-user"></span>!</h1>
+                <p>View your detection statistics and recent activity</p>
+            </div>
 
-            <!-- Welcome Section -->
-            <section class="welcome-section">
-                <div class="welcome-card">
-                    <h2>Welcome back, <span id="welcome-name"></span>! 👋</h2>
-                    <p>Ready to detect some deepfakes?</p>
-                    <a href="/upload.html" class="btn-primary">
-                        <i class="fas fa-upload"></i> Upload File
-                    </a>
-                </div>
-            </section>
-
-            <!-- Statistics Cards -->
-            <section class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="total-detections">0</h3>
-                            <p>Total Detections</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon red">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="fake-detected">0</h3>
-                            <p>Fake Detected</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon green">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="real-detected">0</h3>
-                            <p>Real Detected</p>
-                        </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <h3 id="total-detections">0</h3>
+                        <p>Total Detections</p>
                     </div>
                 </div>
-            </section>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <h3 id="real-count">0</h3>
+                        <p>Real Content</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-info">
+                        <h3 id="fake-count">0</h3>
+                        <p>Fake Content</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <h3 id="avg-confidence">0%</h3>
+                        <p>Avg Confidence</p>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Recent Detections -->
-            <section class="recent-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-clock"></i> Recent Detections</h2>
-                    <a href="/history.html" class="view-all">View All</a>
+            <div class="action-cards">
+                <div class="action-card">
+                    <h3>🖼️ Analyze Image</h3>
+                    <p>Upload and detect deepfakes in images</p>
+                    <a href="upload.html?type=image" class="btn btn-primary">Upload Image</a>
                 </div>
-                
-                <div class="recent-table-container">
-                    <table class="recent-table" id="recent-table">
-                        <thead>
-                            <tr>
-                                <th>File Name</th>
-                                <th>Type</th>
-                                <th>Prediction</th>
-                                <th>Confidence</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recent-tbody">
-                            <tr class="loading-row">
-                                <td colspan="5" class="text-center">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="action-card">
+                    <h3>🎥 Analyze Video</h3>
+                    <p>Upload and detect deepfakes in videos</p>
+                    <a href="upload.html?type=video" class="btn btn-primary">Upload Video</a>
                 </div>
-            </section>
-        </main>
+            </div>
+
+            <div class="recent-activity">
+                <h2>Recent Detections</h2>
+                <div id="recent-detections">
+                    <div class="loading">Loading recent activity...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/auth.js"></script>
+    <script src="js/config.js"></script>
     <script>
-        // Load dashboard data
-        async function loadDashboard() {
-            // Protect page
-            const session = await protectPage();
-            if (!session) return;
+        requireAuth();
+        
+        // Load user info
+        const user = Storage.getUser();
+        document.getElementById('user-name').textContent = user.full_name;
+        document.getElementById('welcome-user').textContent = user.full_name;
 
-            // Update user name
-            document.getElementById('user-name').textContent = session.user_name;
-            document.getElementById('welcome-name').textContent = session.user_name;
-
-            // Load statistics
-            await loadStats();
-
-            // Load recent detections
-            await loadRecentDetections();
-        }
-
+        // Load statistics
         async function loadStats() {
             try {
-                const response = await apiCall(API_ENDPOINTS.DETECTION.STATS);
-                const data = await response.json();
+                const data = await API.request(API_CONFIG.ENDPOINTS.USER_STATS);
+                const stats = data.stats;
 
-                document.getElementById('total-detections').textContent = data.total_detections || 0;
-                document.getElementById('fake-detected').textContent = data.fake_detected || 0;
-                document.getElementById('real-detected').textContent = data.real_detected || 0;
+                document.getElementById('total-detections').textContent = stats.total_detections || 0;
+                document.getElementById('real-count').textContent = stats.real_count || 0;
+                document.getElementById('fake-count').textContent = stats.fake_count || 0;
+                document.getElementById('avg-confidence').textContent = stats.avg_confidence ? 
+                    Math.round(stats.avg_confidence) + '%' : '0%';
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('Failed to load stats:', error);
             }
         }
 
+        // Load recent detections
         async function loadRecentDetections() {
             try {
-                const response = await apiCall(API_ENDPOINTS.DETECTION.HISTORY + '?per_page=5');
-                const data = await response.json();
-
-                const tbody = document.getElementById('recent-tbody');
+                const data = await API.request(API_CONFIG.ENDPOINTS.HISTORY + '?limit=5');
+                const container = document.getElementById('recent-detections');
                 
-                if (data.history && data.history.length > 0) {
-                    tbody.innerHTML = data.history.map(item => `
-                        <tr>
-                            <td>
-                                <i class="fas fa-${item.file_type === 'image' ? 'image' : 'video'}"></i>
-                                ${item.file_name}
-                            </td>
-                            <td><span class="badge badge-${item.file_type}">${item.file_type}</span></td>
-                            <td>
-                                <span class="badge badge-${item.prediction}">
-                                    ${item.prediction === 'fake' ? '⚠️ Fake' : '✓ Real'}
-                                </span>
-                            </td>
-                            <td>${item.confidence}%</td>
-                            <td>${new Date(item.created_at).toLocaleDateString()}</td>
-                        </tr>
-                    `).join('');
-                } else {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="5" class="text-center">
-                                <p style="padding: 20px; color: #666;">
-                                    No detections yet. <a href="/upload.html">Upload your first file</a>
-                                </p>
-                            </td>
-                        </tr>
-                    `;
+                if (data.history.length === 0) {
+                    container.innerHTML = '<p class="empty-state">No detections yet. Start by uploading an image or video!</p>';
+                    return;
                 }
+
+                container.innerHTML = data.history.map(detection => `
+                    <div class="detection-item">
+                        <div class="detection-icon">${detection.file_type === 'image' ? '🖼️' : '🎥'}</div>
+                        <div class="detection-info">
+                            <h4>${detection.file_name}</h4>
+                            <p>Result: <span class="result ${detection.result}">${detection.result.toUpperCase()}</span> 
+                               • Confidence: ${detection.confidence}%</p>
+                            <small>${new Date(detection.created_at).toLocaleString()}</small>
+                        </div>
+                    </div>
+                `).join('');
             } catch (error) {
-                console.error('Error loading recent detections:', error);
-                document.getElementById('recent-tbody').innerHTML = `
-                    <tr>
-                        <td colspan="5" class="text-center error">
-                            Error loading detections
-                        </td>
-                    </tr>
-                `;
+                console.error('Failed to load recent detections:', error);
+                document.getElementById('recent-detections').innerHTML = 
+                    '<p class="error">Failed to load recent activity</p>';
             }
         }
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', loadDashboard);
+        loadStats();
+        loadRecentDetections();
     </script>
 </body>
 </html>

@@ -1,25 +1,17 @@
+# Flask and Web Framework
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 Flask-CORS==4.0.0
 Werkzeug==3.0.1
-python-dotenv==1.0.0
 
-# ML and Computer Vision
+# JWT Authentication
+PyJWT==2.8.0
+
+# ML and Computer Vision (for actual deepfake detection)
 tensorflow==2.15.0
 numpy==1.26.4
 opencv-python==4.9.0.80
 pillow==10.2.0
 
-# Data Processing
-pandas==2.1.4
-scikit-learn==1.4.0
-
-# Database
-SQLAlchemy==2.0.25
-
-# Plotting (for training visualizations)
-matplotlib==3.8.2
-seaborn==0.13.1
-
 # Utilities
-python-dateutil==2.8.2
+python-dotenv==1.0.0

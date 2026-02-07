@@ -1,342 +1,221 @@
-// Global variables
-let allUsers = [];
-let allDetections = [];
-let currentTab = 'users';
-
-// Initialize admin dashboard
-async function initAdminDashboard() {
-    const session = await protectPage('admin');
-    if (!session) return;
-    
-    document.getElementById('admin-name').textContent = session.user_name;
-    
-    await loadSystemStats();
-    await loadUsers();
-}
-
-// Load system statistics
-async function loadSystemStats() {
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.STATS);
-        const data = await response.json();
+// Admin Login Form Handler
+const adminLoginForm = document.getElementById('admin-login-form');
+if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        // Update statistics
-        document.getElementById('total-users').textContent = data.users.total || 0;
-        document.getElementById('total-detections').textContent = data.detections.total || 0;
-        document.getElementById('fake-count').textContent = data.detections.fake || 0;
-        document.getElementById('recent-activity').textContent = data.detections.recent_week || 0;
-    } catch (error) {
-        console.error('Error loading stats:', error);
-    }
-}
-
-// Load all users
-async function loadUsers() {
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.USERS + '?per_page=100');
-        const data = await response.json();
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
         
-        allUsers = data.users || [];
-        displayUsers();
-    } catch (error) {
-        console.error('Error loading users:', error);
-        showUsersError();
-    }
-}
-
-// Display users table
-function displayUsers() {
-    const tbody = document.getElementById('users-tbody');
-    
-    if (allUsers.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center">No users found</td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = allUsers.map(user => `
-        <tr>
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td>
-                <span class="badge badge-${user.role === 'admin' ? 'admin' : 'user'}">
-                    ${user.role}
-                </span>
-            </td>
-            <td>${user.detection_count || 0}</td>
-            <td>${formatDate(user.created_at)}</td>
-            <td>
-                ${user.role !== 'admin' ? `
-                    <button class="btn-icon" onclick="toggleUserRole(${user.id})" title="Toggle Role">
-                        <i class="fas fa-user-cog"></i>
-                    </button>
-                    <button class="btn-icon danger" onclick="deleteUser(${user.id}, '${user.name}')" title="Delete User">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : '<span class="text-muted">Admin</span>'}
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Search users
-function searchUsers() {
-    const searchTerm = document.getElementById('user-search').value.toLowerCase();
-    
-    const filtered = allUsers.filter(user => 
-        user.name.toLowerCase().includes(searchTerm) ||
-        user.email.toLowerCase().includes(searchTerm)
-    );
-    
-    const tbody = document.getElementById('users-tbody');
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" class="text-center">No users found matching "${searchTerm}"</td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = filtered.map(user => `
-        <tr>
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td>
-                <span class="badge badge-${user.role === 'admin' ? 'admin' : 'user'}">
-                    ${user.role}
-                </span>
-            </td>
-            <td>${user.detection_count || 0}</td>
-            <td>${formatDate(user.created_at)}</td>
-            <td>
-                ${user.role !== 'admin' ? `
-                    <button class="btn-icon" onclick="toggleUserRole(${user.id})" title="Toggle Role">
-                        <i class="fas fa-user-cog"></i>
-                    </button>
-                    <button class="btn-icon danger" onclick="deleteUser(${user.id}, '${user.name}')" title="Delete User">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                ` : '<span class="text-muted">Admin</span>'}
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Toggle user role
-async function toggleUserRole(userId) {
-    if (!confirm('Are you sure you want to change this user\'s role?')) return;
-    
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.TOGGLE_ROLE(userId), {
-            method: 'PUT'
-        });
+        setLoading(true);
+        hideMessages();
         
-        if (response.ok) {
-            await loadUsers();
-            alert('User role updated successfully');
-        } else {
-            const error = await response.json();
-            alert('Error: ' + error.error);
+        try {
+            const response = await API.request(API_CONFIG.ENDPOINTS.LOGIN, {
+                method: 'POST',
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                }),
+                skipAuth: true
+            });
+            
+            console.log('Login response:', response);
+            
+            // Check if user is admin
+            if (!response.user.is_admin) {
+                showError('Access denied. Admin privileges required.');
+                return;
+            }
+            
+            // Store token and user info
+            Storage.setToken(response.token);
+            Storage.setUser(response.user);
+            
+            showSuccess('Admin login successful! Redirecting...');
+            
+            // Redirect to admin dashboard
+            setTimeout(() => {
+                window.location.href = '/admin-dashboard.html';
+            }, 1000);
+            
+        } catch (error) {
+            showError(error.message || 'Login failed. Please try again.');
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('Error toggling role:', error);
-        alert('Failed to update user role');
-    }
+    });
 }
 
-// Delete user
-async function deleteUser(userId, userName) {
-    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) return;
+// Admin Dashboard Logic
+if (window.location.pathname.includes('admin-dashboard')) {
+    requireAdmin();
     
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.DELETE_USER(userId), {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            await loadUsers();
-            await loadSystemStats();
-            alert('User deleted successfully');
-        } else {
-            const error = await response.json();
-            alert('Error: ' + error.error);
+    const user = Storage.getUser();
+    if (document.getElementById('admin-name')) {
+        document.getElementById('admin-name').textContent = user.full_name;
+    }
+    
+    // Load dashboard stats
+    async function loadDashboardStats() {
+        try {
+            const data = await API.request(API_CONFIG.ENDPOINTS.ADMIN_DASHBOARD);
+            
+            document.getElementById('total-users').textContent = data.total_users || 0;
+            document.getElementById('total-detections').textContent = data.total_detections || 0;
+            document.getElementById('fake-detections').textContent = data.fake_detections || 0;
+            document.getElementById('real-detections').textContent = data.real_detections || 0;
+        } catch (error) {
+            console.error('Failed to load stats:', error);
         }
-    } catch (error) {
-        console.error('Error deleting user:', error);
-        alert('Failed to delete user');
-    }
-}
-
-// Load all detections
-async function loadDetections() {
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.DETECTIONS + '?per_page=100');
-        const data = await response.json();
-        
-        allDetections = data.detections || [];
-        displayDetections();
-    } catch (error) {
-        console.error('Error loading detections:', error);
-        showDetectionsError();
-    }
-}
-
-// Display detections table
-function displayDetections() {
-    const tbody = document.getElementById('detections-tbody');
-    
-    if (allDetections.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center">No detections found</td>
-            </tr>
-        `;
-        return;
     }
     
-    tbody.innerHTML = allDetections.map(det => `
-        <tr>
-            <td>${det.id}</td>
-            <td>${det.user_name}</td>
-            <td>
-                <i class="fas fa-${det.file_type === 'image' ? 'image' : 'video'}"></i>
-                ${det.file_name}
-            </td>
-            <td><span class="badge badge-${det.file_type}">${det.file_type}</span></td>
-            <td>
-                <span class="badge badge-${det.prediction}">
-                    ${det.prediction === 'fake' ? '⚠️ Fake' : '✓ Real'}
-                </span>
-            </td>
-            <td>${det.confidence}%</td>
-            <td>${formatDate(det.created_at)}</td>
-            <td>
-                <button class="btn-icon danger" onclick="deleteDetection(${det.id})" title="Delete">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Filter detections
-function filterDetections() {
-    const filter = document.getElementById('detection-filter').value;
-    
-    const filtered = filter === 'all' ? allDetections : 
-                     allDetections.filter(det => det.prediction === filter);
-    
-    const tbody = document.getElementById('detections-tbody');
-    
-    if (filtered.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center">No detections found</td>
-            </tr>
-        `;
-        return;
-    }
-    
-    tbody.innerHTML = filtered.map(det => `
-        <tr>
-            <td>${det.id}</td>
-            <td>${det.user_name}</td>
-            <td>
-                <i class="fas fa-${det.file_type === 'image' ? 'image' : 'video'}"></i>
-                ${det.file_name}
-            </td>
-            <td><span class="badge badge-${det.file_type}">${det.file_type}</span></td>
-            <td>
-                <span class="badge badge-${det.prediction}">
-                    ${det.prediction === 'fake' ? '⚠️ Fake' : '✓ Real'}
-                </span>
-            </td>
-            <td>${det.confidence}%</td>
-            <td>${formatDate(det.created_at)}</td>
-            <td>
-                <button class="btn-icon danger" onclick="deleteDetection(${det.id})" title="Delete">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Delete detection
-async function deleteDetection(detectionId) {
-    if (!confirm('Are you sure you want to delete this detection record?')) return;
-    
-    try {
-        const response = await apiCall(API_ENDPOINTS.ADMIN.DELETE_DETECTION(detectionId), {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            await loadDetections();
-            await loadSystemStats();
-            alert('Detection deleted successfully');
-        } else {
-            const error = await response.json();
-            alert('Error: ' + error.error);
+    // Load users
+    async function loadUsers() {
+        try {
+            const data = await API.request(API_CONFIG.ENDPOINTS.ADMIN_USERS);
+            const usersList = document.getElementById('users-list');
+            
+            if (data.users.length === 0) {
+                usersList.innerHTML = '<p class="empty-state">No users found.</p>';
+                return;
+            }
+            
+            usersList.innerHTML = `
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Verified</th>
+                            <th>Admin</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.users.map(user => `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.full_name}</td>
+                                <td>${user.email}</td>
+                                <td>${user.is_verified ? '✅' : '❌'}</td>
+                                <td>${user.is_admin ? '👑' : '-'}</td>
+                                <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Failed to load users:', error);
+            document.getElementById('users-list').innerHTML = 
+                '<p class="error">Failed to load users.</p>';
         }
-    } catch (error) {
-        console.error('Error deleting detection:', error);
-        alert('Failed to delete detection');
+    }
+    
+    // Load detections
+    async function loadDetections() {
+        try {
+            const data = await API.request(API_CONFIG.ENDPOINTS.ADMIN_DETECTIONS);
+            const detectionsList = document.getElementById('detections-list');
+            
+            if (data.detections.length === 0) {
+                detectionsList.innerHTML = '<p class="empty-state">No detections found.</p>';
+                return;
+            }
+            
+            detectionsList.innerHTML = `
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>File</th>
+                            <th>Type</th>
+                            <th>Result</th>
+                            <th>Confidence</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.detections.map(detection => `
+                            <tr>
+                                <td>${detection.id}</td>
+                                <td>${detection.full_name}</td>
+                                <td>${detection.file_name}</td>
+                                <td>${detection.file_type}</td>
+                                <td><span class="result-badge ${detection.result}">${detection.result.toUpperCase()}</span></td>
+                                <td>${detection.confidence}%</td>
+                                <td>${new Date(detection.created_at).toLocaleDateString()}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } catch (error) {
+            console.error('Failed to load detections:', error);
+            document.getElementById('detections-list').innerHTML = 
+                '<p class="error">Failed to load detections.</p>';
+        }
+    }
+    
+    // Tab switching
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    if (tabButtons.length > 0) {
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                const tabName = btn.dataset.tab;
+                document.getElementById(tabName + '-tab').classList.add('active');
+            });
+        });
+    }
+    
+    // Initial load
+    loadDashboardStats();
+    loadUsers();
+    loadDetections();
+}
+
+// Utility Functions
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
     }
 }
 
-// Switch tabs
-function switchTab(tab) {
-    currentTab = tab;
-    
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
-    
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(`${tab}-tab`).classList.add('active');
-    
-    // Load data if not already loaded
-    if (tab === 'detections' && allDetections.length === 0) {
-        loadDetections();
+function showSuccess(message) {
+    const successDiv = document.getElementById('success-message');
+    if (successDiv) {
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
     }
 }
 
-// Helper functions
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+function hideMessages() {
+    const errorDiv = document.getElementById('error-message');
+    const successDiv = document.getElementById('success-message');
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (successDiv) successDiv.style.display = 'none';
 }
 
-function showUsersError() {
-    const tbody = document.getElementById('users-tbody');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="7" class="text-center error">
-                Error loading users. Please refresh the page.
-            </td>
-        </tr>
-    `;
+function setLoading(isLoading) {
+    const btn = document.querySelector('button[type="submit"]');
+    const btnText = document.getElementById('btn-text');
+    const btnLoader = document.getElementById('btn-loader');
+    
+    if (btn) {
+        btn.disabled = isLoading;
+    }
+    
+    if (btnText && btnLoader) {
+        btnText.style.display = isLoading ? 'none' : 'inline';
+        btnLoader.style.display = isLoading ? 'inline-block' : 'none';
+    }
 }
-
-function showDetectionsError() {
-    const tbody = document.getElementById('detections-tbody');
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="8" class="text-center error">
-                Error loading detections. Please refresh the page.
-            </td>
-        </tr>
-    `;
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initAdminDashboard);

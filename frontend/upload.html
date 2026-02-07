@@ -3,114 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload & Detect - DeepFake Detector</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Upload & Analyze - Deepfake Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-shield-alt"></i>
-                <span>DeepFake Detector</span>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🔍 Deepfake Detector</h1>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard.html" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/upload.html" class="nav-item active">
-                    <i class="fas fa-upload"></i>
-                    <span>Upload & Detect</span>
-                </a>
-                <a href="/history.html" class="nav-item">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </nav>
-        </aside>
+            <div class="nav-links">
+                <span id="user-name" class="user-name"></span>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="upload.html" class="active">New Detection</a>
+                <a href="history.html">History</a>
+                <button onclick="logout()" class="btn btn-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="dashboard-header">
-                <h1>Upload & Detect</h1>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="user-name">Loading...</span>
+    <div class="dashboard-container">
+        <div class="container">
+            <div class="upload-section">
+                <h1>Upload & Analyze Content</h1>
+                <p>Upload an image or video to detect if it's real or manipulated</p>
+
+                <div class="upload-tabs">
+                    <button class="tab-btn active" data-type="image">📷 Image</button>
+                    <button class="tab-btn" data-type="video">🎥 Video</button>
                 </div>
-            </header>
 
-            <!-- Upload Section -->
-            <section class="upload-section">
-                <div class="upload-container">
-                    <div class="upload-info">
-                        <h2><i class="fas fa-info-circle"></i> Supported Formats</h2>
-                        <div class="format-list">
-                            <div class="format-item">
-                                <i class="fas fa-image"></i>
-                                <span>Images: PNG, JPG, JPEG, GIF, BMP</span>
-                            </div>
-                            <div class="format-item">
-                                <i class="fas fa-video"></i>
-                                <span>Videos: MP4, AVI, MOV, MKV, FLV, WMV</span>
-                            </div>
-                            <div class="format-item">
-                                <i class="fas fa-weight"></i>
-                                <span>Max Size: 100 MB</span>
-                            </div>
-                        </div>
+                <div id="error-message" class="error-message" style="display: none;"></div>
+                <div id="success-message" class="success-message" style="display: none;"></div>
+
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drag & Drop or Click to Upload</h3>
+                    <p id="file-types">Supported: JPG, PNG, GIF</p>
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+                        Choose File
+                    </button>
+                </div>
+
+                <div id="file-preview" class="file-preview" style="display: none;">
+                    <h3>Selected File:</h3>
+                    <div class="preview-container">
+                        <img id="image-preview" style="display: none;">
+                        <video id="video-preview" controls style="display: none;"></video>
+                        <div id="file-info"></div>
                     </div>
+                    <div class="preview-actions">
+                        <button class="btn btn-secondary" onclick="resetUpload()">Change File</button>
+                        <button class="btn btn-primary" id="analyze-btn" onclick="analyzeFile()">
+                            Analyze Now
+                        </button>
+                    </div>
+                </div>
 
-                    <div class="upload-box">
-                        <div id="drop-zone" class="drop-zone">
-                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                            <h3>Drag & Drop File Here</h3>
-                            <p>or</p>
-                            <label for="file-input" class="btn-primary">
-                                <i class="fas fa-folder-open"></i> Browse Files
-                            </label>
-                            <input type="file" id="file-input" accept="image/*,video/*" style="display: none;">
+                <div id="progress-section" class="progress-section" style="display: none;">
+                    <h3>Analyzing...</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">Uploading file...</p>
+                </div>
+
+                <div id="results-section" class="results-section" style="display: none;">
+                    <h2>Analysis Results</h2>
+                    <div class="result-card">
+                        <div class="result-status" id="result-status"></div>
+                        <div class="result-details">
+                            <div class="detail-item">
+                                <span class="label">Confidence:</span>
+                                <span class="value" id="confidence-value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Processing Time:</span>
+                                <span class="value" id="processing-time"></span>
+                            </div>
                         </div>
-
-                        <!-- File Preview -->
-                        <div id="file-preview" class="file-preview" style="display: none;">
-                            <div class="preview-header">
-                                <h3><i class="fas fa-file"></i> Selected File</h3>
-                                <button onclick="clearFile()" class="btn-clear">
-                                    <i class="fas fa-times"></i> Clear
-                                </button>
-                            </div>
-                            <div id="preview-content" class="preview-content"></div>
-                            <div class="preview-info">
-                                <p id="file-name"></p>
-                                <p id="file-size"></p>
-                            </div>
-                            <button id="upload-btn" class="btn-primary btn-large" onclick="uploadFile()">
-                                <i class="fas fa-search"></i> Analyze File
+                        <div class="result-actions">
+                            <button class="btn btn-primary" onclick="window.location.href='dashboard.html'">
+                                View Dashboard
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetUpload()">
+                                Analyze Another
                             </button>
                         </div>
-
-                        <!-- Progress Bar -->
-                        <div id="progress-container" class="progress-container" style="display: none;">
-                            <h3><i class="fas fa-spinner fa-spin"></i> Analyzing...</h3>
-                            <div class="progress-bar">
-                                <div id="progress-fill" class="progress-fill"></div>
-                            </div>
-                            <p id="progress-text">Uploading file...</p>
-                        </div>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/upload.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/upload.js"></script>
 </body>
 </html>

@@ -1,94 +1,143 @@
-// Initialize results page
-async function initResultsPage() {
-    const session = await protectPage();
-    if (!session) return;
-    
-    document.getElementById('user-name').textContent = session.user_name;
-    
-    // Get detection data from localStorage
-    const detectionData = localStorage.getItem('latestDetection');
-    
-    if (detectionData) {
-        const detection = JSON.parse(detectionData);
+requireAuth();
+
+// Load user info
+const user = Storage.getUser();
+document.getElementById('user-name').textContent = user.full_name;
+
+// Get detection ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const detectionId = urlParams.get('id');
+
+if (!detectionId) {
+    showError();
+} else {
+    loadDetectionDetails(detectionId);
+}
+
+async function loadDetectionDetails(id) {
+    try {
+        const data = await API.request(API_CONFIG.ENDPOINTS.DETECTION_DETAIL + '/' + id);
+        const detection = data.detection;
+        
+        if (!detection) {
+            showError();
+            return;
+        }
+        
         displayResults(detection);
-        localStorage.removeItem('latestDetection');
-    } else {
-        // No data, redirect to upload
-        window.location.href = '/upload.html';
+        
+    } catch (error) {
+        console.error('Failed to load detection:', error);
+        showError();
     }
 }
 
-// Display detection results
 function displayResults(detection) {
-    const loadingState = document.getElementById('loading-state');
-    const resultsContent = document.getElementById('results-content');
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('result-details').style.display = 'block';
     
-    // Hide loading, show results
-    loadingState.style.display = 'none';
-    resultsContent.style.display = 'block';
+    // File name
+    document.getElementById('file-name-display').textContent = detection.file_name;
     
-    // Prediction result
-    const predictionResult = document.getElementById('prediction-result');
-    const isFake = detection.prediction === 'fake';
+    // Result status
+    const resultStatus = document.getElementById('result-status');
+    const isFake = detection.result.toLowerCase() === 'fake';
     
-    predictionResult.innerHTML = `
-        <div class="prediction-badge ${isFake ? 'fake' : 'real'}">
-            <i class="fas fa-${isFake ? 'exclamation-triangle' : 'check-circle'}"></i>
-            <h2>${isFake ? 'DEEPFAKE DETECTED' : 'AUTHENTIC MEDIA'}</h2>
-            <p>${isFake ? 'This file appears to be AI-generated or manipulated' : 'This file appears to be genuine and unmanipulated'}</p>
-        </div>
+    resultStatus.className = 'result-status ' + (isFake ? 'fake' : 'real');
+    resultStatus.innerHTML = `
+        <div class="status-icon">${isFake ? '⚠️' : '✅'}</div>
+        <h3>${isFake ? 'FAKE DETECTED' : 'AUTHENTIC'}</h3>
+        <p>This content appears to be ${isFake ? 'manipulated or artificially generated' : 'genuine and unaltered'}</p>
     `;
     
-    // Confidence score
-    const confidence = detection.confidence || 0;
-    const confidenceFill = document.getElementById('confidence-fill');
-    const confidenceText = document.getElementById('confidence-text');
+    // Details
+    document.getElementById('result-value').innerHTML = 
+        `<span class="result ${detection.result}">${detection.result.toUpperCase()}</span>`;
+    document.getElementById('confidence-value').textContent = detection.confidence + '%';
+    document.getElementById('processing-time').textContent = detection.processing_time + ' seconds';
+    document.getElementById('file-type').textContent = detection.file_type.toUpperCase();
+    document.getElementById('analyzed-on').textContent = 
+        new Date(detection.created_at).toLocaleString();
     
-    confidenceFill.style.width = confidence + '%';
-    confidenceFill.className = 'confidence-fill ' + (isFake ? 'red' : 'green');
-    confidenceText.textContent = confidence.toFixed(2);
-    
-    // File details
-    document.getElementById('detail-filename').textContent = detection.file_name;
-    document.getElementById('detail-type').textContent = detection.file_type.toUpperCase();
-    document.getElementById('detail-time').textContent = detection.processing_time ? 
-        detection.processing_time.toFixed(2) + 's' : '-';
-    document.getElementById('detail-date').textContent = new Date(detection.created_at).toLocaleString();
-    
-    // Analysis information
-    const analysisInfo = document.getElementById('analysis-info');
-    
-    if (isFake) {
-        analysisInfo.innerHTML = `
-            <div class="info-box warning">
-                <h4>⚠️ Deepfake Indicators Detected</h4>
-                <p>Our AI model has identified patterns consistent with AI-generated or manipulated content. 
-                With ${confidence.toFixed(2)}% confidence, this media shows signs of forgery.</p>
-                <ul>
-                    <li>Facial artifacts or inconsistencies may be present</li>
-                    <li>Temporal anomalies detected in video frames</li>
-                    <li>Compression patterns suggest manipulation</li>
-                </ul>
-                <p><strong>Recommendation:</strong> Exercise caution when sharing or trusting this content. 
-                Verify the source and cross-reference with other reliable sources.</p>
-            </div>
-        `;
-    } else {
-        analysisInfo.innerHTML = `
-            <div class="info-box success">
-                <h4>✓ Authentic Media Detected</h4>
-                <p>Our analysis indicates this media is ${confidence.toFixed(2)}% likely to be genuine and unmanipulated.</p>
-                <ul>
-                    <li>No significant forgery artifacts detected</li>
-                    <li>Natural compression patterns observed</li>
-                    <li>Temporal consistency maintained throughout</li>
-                </ul>
-                <p><strong>Note:</strong> While our model shows high confidence in authenticity, 
-                no detection system is 100% accurate. Always verify important content from multiple sources.</p>
-            </div>
-        `;
+    // Metadata
+    if (detection.metadata) {
+        const metadata = typeof detection.metadata === 'string' ? 
+            JSON.parse(detection.metadata) : detection.metadata;
+        
+        let metadataHtml = '';
+        
+        // File info
+        if (metadata.file_info) {
+            metadataHtml += '<h4 style="margin-top: 1rem; color: #2d3748;">File Information</h4>';
+            for (const [key, value] of Object.entries(metadata.file_info)) {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                metadataHtml += `
+                    <div class="detail-item">
+                        <span class="label">${label}:</span>
+                        <span class="value">${formatMetadataValue(key, value)}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        // Detection method
+        if (metadata.detection_method) {
+            metadataHtml += '<h4 style="margin-top: 1rem; color: #2d3748;">Detection Method</h4>';
+            metadataHtml += `
+                <div class="detail-item">
+                    <span class="label">Method:</span>
+                    <span class="value">${metadata.detection_method}</span>
+                </div>
+            `;
+        }
+        
+        // Additional info
+        if (metadata.num_faces_detected !== undefined) {
+            metadataHtml += `
+                <div class="detail-item">
+                    <span class="label">Faces Detected:</span>
+                    <span class="value">${metadata.num_faces_detected}</span>
+                </div>
+            `;
+        }
+        
+        if (metadata.frames_analyzed) {
+            metadataHtml += `
+                <div class="detail-item">
+                    <span class="label">Frames Analyzed:</span>
+                    <span class="value">${metadata.frames_analyzed}</span>
+                </div>
+            `;
+        }
+        
+        if (metadata.model_version) {
+            metadataHtml += `
+                <div class="detail-item">
+                    <span class="label">Model Version:</span>
+                    <span class="value">${metadata.model_version}</span>
+                </div>
+            `;
+        }
+        
+        document.getElementById('metadata-content').innerHTML = metadataHtml;
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', initResultsPage);
+function formatMetadataValue(key, value) {
+    if (key.includes('size_bytes')) {
+        const mb = (value / (1024 * 1024)).toFixed(2);
+        return `${mb} MB`;
+    }
+    if (key.includes('duration')) {
+        return `${value.toFixed(2)} seconds`;
+    }
+    if (typeof value === 'number') {
+        return value.toLocaleString();
+    }
+    return value;
+}
+
+function showError() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-section').style.display = 'block';
+}

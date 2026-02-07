@@ -1,19 +1,17 @@
 """
-Setup Script - Initialize Database and Create Users
-Run this script to set up your database properly
+SIMPLIFIED Setup Script - Initialize Database and Create Users
+NO PASSWORD HASHING - Simple plain text storage
 """
 
 import os
 import sys
-
-# Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+import sqlite3
 
 def setup_database():
     """Set up database and create initial users"""
     
     print("=" * 60)
-    print("DEEPFAKE DETECTION - DATABASE SETUP")
+    print("DEEPFAKE DETECTION - SIMPLIFIED DATABASE SETUP")
     print("=" * 60)
     
     # Step 1: Remove old database
@@ -30,59 +28,33 @@ def setup_database():
     
     # Step 3: Initialize database with schema
     print("\n2. Initializing database with schema...")
-    from backend.database import init_db
-    init_db(db_path, 'database/schema.sql')
+    schema_path = 'database/schema.sql'
+    
+    if not os.path.exists(schema_path):
+        print(f"   ✗ Error: Schema file not found at {schema_path}")
+        return False
+    
+    # Read and execute schema
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    
+    with open(schema_path, 'r') as f:
+        schema = f.read()
+        cursor.executescript(schema)
+    
+    connection.commit()
     print("   ✓ Database schema created")
     
-    # Step 4: Create users with proper password hashing
-    print("\n3. Creating users...")
-    from backend.app import create_app
-    from backend.models.user import User
-    from backend.database import db
+    # Step 4: Verify users were created
+    print("\n3. Verifying default users...")
     
-    app = create_app('development')
+    cursor.execute("SELECT email, password, role FROM users")
+    users = cursor.fetchall()
     
-    with app.app_context():
-        # Create admin user
-        print("   Creating admin user...")
-        admin = User(
-            name='Admin',
-            email='admin@deepfake.com',
-            role='admin'
-        )
-        admin.set_password('admin123')
-        db.session.add(admin)
-        
-        # Create test user
-        print("   Creating test user...")
-        test_user = User(
-            name='Test User',
-            email='test@example.com',
-            role='user'
-        )
-        test_user.set_password('test123')
-        db.session.add(test_user)
-        
-        # Commit to database
-        db.session.commit()
-        print("   ✓ Users created")
-        
-        # Verify passwords
-        print("\n4. Verifying password hashes...")
-        
-        admin_check = User.query.filter_by(email='admin@deepfake.com').first()
-        if admin_check and admin_check.check_password('admin123'):
-            print("   ✓ Admin password verified")
-        else:
-            print("   ✗ Admin password verification FAILED!")
-            return False
-        
-        test_check = User.query.filter_by(email='test@example.com').first()
-        if test_check and test_check.check_password('test123'):
-            print("   ✓ Test user password verified")
-        else:
-            print("   ✗ Test user password verification FAILED!")
-            return False
+    for email, password, role in users:
+        print(f"   ✓ {role.upper()}: {email} (password: {password})")
+    
+    connection.close()
     
     print("\n" + "=" * 60)
     print("✓ SETUP COMPLETE!")
@@ -100,6 +72,8 @@ def setup_database():
     print("1. Run: cd backend")
     print("2. Run: python app.py")
     print("3. Open: http://localhost:5000")
+    print("\n⚠️  WARNING: Passwords are stored in PLAIN TEXT (no hashing)")
+    print("   This is for development/demo purposes ONLY!")
     print("=" * 60)
     
     return True

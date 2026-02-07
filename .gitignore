@@ -13,3 +13,6 @@ processed_dataset/
 Celeb-DF-v1/
 
 uploads/
+
+# Trained CNN model
+backend/ml_models/cnn_model.h5

@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, session
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from config import config
 from database import db
@@ -16,22 +16,13 @@ def create_app(config_name='development'):
     
     # Initialize extensions
     db.init_app(app)
-    
-    # Configure CORS with credentials support
-    CORS(app, 
-         supports_credentials=True, 
-         origins=['http://localhost:5000', 'http://127.0.0.1:5000'],
-         allow_headers=['Content-Type'],
-         expose_headers=['Content-Type'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
-    
-    # Configure session
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SECURE'] = False  # Set to True if using HTTPS
+    CORS(app)  # Enable CORS for all routes
     
     # Register blueprints
-    from routes import auth_bp, detection_bp, admin_bp
+    from auth_routes import auth_bp
+    from detection_routes import detection_bp
+    from admin_routes import admin_bp
+    
     app.register_blueprint(auth_bp)
     app.register_blueprint(detection_bp)
     app.register_blueprint(admin_bp)
@@ -44,21 +35,27 @@ def create_app(config_name='development'):
     # Serve frontend files
     @app.route('/')
     def index():
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory('../frontend', 'index.html')
     
     @app.route('/<path:path>')
     def serve_static(path):
-        if os.path.exists(os.path.join(app.static_folder, path)):
-            return send_from_directory(app.static_folder, path)
-        return send_from_directory(app.static_folder, 'index.html')
+        if os.path.exists(os.path.join('../frontend', path)):
+            return send_from_directory('../frontend', path)
+        return send_from_directory('../frontend', 'index.html')
     
-    # Health check endpoint
-    @app.route('/api/health')
+    # Health check
+    @app.route('/health')
     def health():
-        return {'status': 'ok', 'message': 'Server is running'}
+        return {'status': 'healthy'}, 200
     
     return app
 
 if __name__ == '__main__':
     app = create_app('development')
+    print("=" * 60)
+    print("🚀 Deepfake Detection System Starting...")
+    print("=" * 60)
+    print("📡 Server: http://localhost:5000")
+    print("👤 Admin: admin@deepfake.com / admin123")
+    print("=" * 60)
     app.run(host='0.0.0.0', port=5000, debug=True)

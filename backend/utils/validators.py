@@ -1,5 +1,7 @@
+"""
+SIMPLIFIED Validators - Basic validation only
+"""
 import re
-from werkzeug.utils import secure_filename
 
 def validate_email(email):
     """Validate email format"""
@@ -8,16 +10,11 @@ def validate_email(email):
 
 def validate_password(password):
     """
-    Validate password strength
-    Requirements:
-    - At least 6 characters
-    - At least one letter
+    SIMPLIFIED password validation
+    Just check minimum length
     """
-    if len(password) < 6:
-        return False, "Password must be at least 6 characters long"
-    
-    if not re.search(r'[a-zA-Z]', password):
-        return False, "Password must contain at least one letter"
+    if len(password) < 3:
+        return False, "Password must be at least 3 characters long"
     
     return True, "Valid password"
 
@@ -37,8 +34,12 @@ def allowed_file(filename, allowed_extensions):
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 def sanitize_filename(filename):
-    """Sanitize filename for safe storage"""
-    return secure_filename(filename)
+    """Basic filename sanitization"""
+    # Remove any path components
+    filename = filename.replace('/', '_').replace('\\', '_')
+    # Remove any potentially dangerous characters
+    filename = re.sub(r'[<>:"|?*]', '_', filename)
+    return filename
 
 def validate_file_size(file, max_size_mb=100):
     """Validate file size"""

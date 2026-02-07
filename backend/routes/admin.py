@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from models.user import User
 from models.detection import DetectionHistory
 from database import db
@@ -10,22 +10,33 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/api/admin')
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
 def get_all_users():
-    """Get all users (admin only)"""
+    """Get all users (admin only) with detection counts"""
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
         
+        # Get all users
         users_query = User.query.order_by(User.created_at.desc())
         paginated = users_query.paginate(page=page, per_page=per_page, error_out=False)
         
+        # Build user list with detection counts
+        users_list = []
+        for user in paginated.items:
+            user_dict = user.to_dict()
+            # Get detection count for this user
+            detection_count = DetectionHistory.query.filter_by(user_id=user.id).count()
+            user_dict['detection_count'] = detection_count
+            users_list.append(user_dict)
+        
         return jsonify({
-            'users': [user.to_dict() for user in paginated.items],
+            'users': users_list,
             'total': paginated.total,
             'pages': paginated.pages,
             'current_page': page
         }), 200
     
     except Exception as e:
+        print(f"Error in get_all_users: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/users/<int:user_id>', methods=['GET'])
@@ -46,6 +57,7 @@ def get_user_detail(user_id):
         return jsonify({'user': user_data}), 200
     
     except Exception as e:
+        print(f"Error in get_user_detail: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/users/<int:user_id>', methods=['DELETE'])
@@ -68,6 +80,7 @@ def delete_user(user_id):
     
     except Exception as e:
         db.session.rollback()
+        print(f"Error in delete_user: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/users/<int:user_id>/toggle-role', methods=['PUT'])
@@ -90,15 +103,16 @@ def toggle_user_role(user_id):
     
     except Exception as e:
         db.session.rollback()
+        print(f"Error in toggle_user_role: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/detections', methods=['GET'])
 @admin_required
 def get_all_detections():
-    """Get all detection history (admin only)"""
+    """Get all detection history (admin only) with user information"""
     try:
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
+        per_page = request.args.get('per_page', 100, type=int)
         
         detections_query = DetectionHistory.query.order_by(
             DetectionHistory.created_at.desc()
@@ -122,6 +136,7 @@ def get_all_detections():
         }), 200
     
     except Exception as e:
+        print(f"Error in get_all_detections: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/stats', methods=['GET'])
@@ -171,6 +186,7 @@ def get_system_stats():
         }), 200
     
     except Exception as e:
+        print(f"Error in get_system_stats: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 @admin_bp.route('/detections/<int:detection_id>', methods=['DELETE'])
@@ -189,4 +205,5 @@ def delete_detection(detection_id):
     
     except Exception as e:
         db.session.rollback()
+        print(f"Error in delete_detection: {e}")
         return jsonify({'error': f'Server error: {str(e)}'}), 500

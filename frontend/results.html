@@ -3,130 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detection Results - DeepFake Detector</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Detection Results - Deepfake Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-shield-alt"></i>
-                <span>DeepFake Detector</span>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🔍 Deepfake Detector</h1>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard.html" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/upload.html" class="nav-item">
-                    <i class="fas fa-upload"></i>
-                    <span>Upload & Detect</span>
-                </a>
-                <a href="/history.html" class="nav-item">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </nav>
-        </aside>
+            <div class="nav-links">
+                <span id="user-name" class="user-name"></span>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="upload.html">New Detection</a>
+                <a href="history.html">History</a>
+                <button onclick="logout()" class="btn btn-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="dashboard-header">
-                <h1>Detection Results</h1>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="user-name">Loading...</span>
+    <div class="dashboard-container">
+        <div class="container">
+            <div id="loading" class="loading" style="text-align: center; padding: 3rem;">
+                Loading detection details...
+            </div>
+
+            <div id="result-details" style="display: none;">
+                <div class="dashboard-header">
+                    <h1>Detection Results</h1>
+                    <p id="file-name-display"></p>
                 </div>
-            </header>
 
-            <!-- Results Section -->
-            <section class="results-section">
-                <div class="results-container">
-                    <!-- Loading State -->
-                    <div id="loading-state" class="loading-state">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading results...</p>
-                    </div>
-
-                    <!-- Results Content -->
-                    <div id="results-content" style="display: none;">
-                        <!-- Prediction Result -->
-                        <div class="result-card">
-                            <div class="result-header">
-                                <h2><i class="fas fa-clipboard-check"></i> Detection Result</h2>
+                <div class="results-section">
+                    <div class="result-card">
+                        <div class="result-status" id="result-status"></div>
+                        
+                        <div class="result-details">
+                            <h3>Analysis Details</h3>
+                            <div class="detail-item">
+                                <span class="label">Result:</span>
+                                <span class="value" id="result-value"></span>
                             </div>
-                            <div id="prediction-result" class="prediction-result">
-                                <!-- Will be filled by JavaScript -->
+                            <div class="detail-item">
+                                <span class="label">Confidence Score:</span>
+                                <span class="value" id="confidence-value"></span>
                             </div>
-                        </div>
-
-                        <!-- Confidence Score -->
-                        <div class="result-card">
-                            <h3><i class="fas fa-percentage"></i> Confidence Score</h3>
-                            <div class="confidence-container">
-                                <div class="confidence-bar">
-                                    <div id="confidence-fill" class="confidence-fill"></div>
-                                </div>
-                                <div class="confidence-value">
-                                    <span id="confidence-text">0</span>%
-                                </div>
+                            <div class="detail-item">
+                                <span class="label">Processing Time:</span>
+                                <span class="value" id="processing-time"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">File Type:</span>
+                                <span class="value" id="file-type"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Analyzed On:</span>
+                                <span class="value" id="analyzed-on"></span>
                             </div>
                         </div>
 
-                        <!-- File Details -->
-                        <div class="result-card">
-                            <h3><i class="fas fa-info-circle"></i> File Details</h3>
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <label>File Name:</label>
-                                    <span id="detail-filename">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>File Type:</label>
-                                    <span id="detail-type">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Processing Time:</label>
-                                    <span id="detail-time">-</span>
-                                </div>
-                                <div class="detail-item">
-                                    <label>Analyzed On:</label>
-                                    <span id="detail-date">-</span>
-                                </div>
-                            </div>
+                        <div id="metadata-section" class="result-details" style="margin-top: 1.5rem;">
+                            <h3>Technical Metadata</h3>
+                            <div id="metadata-content"></div>
                         </div>
 
-                        <!-- Analysis Info -->
-                        <div class="result-card info-card">
-                            <h3><i class="fas fa-lightbulb"></i> What This Means</h3>
-                            <div id="analysis-info" class="analysis-info">
-                                <!-- Will be filled by JavaScript -->
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
                         <div class="result-actions">
-                            <a href="/upload.html" class="btn-primary">
-                                <i class="fas fa-upload"></i> Analyze Another File
-                            </a>
-                            <a href="/history.html" class="btn-secondary">
-                                <i class="fas fa-history"></i> View History
-                            </a>
+                            <button class="btn btn-primary" onclick="window.location.href='history.html'">
+                                Back to History
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.location.href='upload.html'">
+                                Analyze Another
+                            </button>
                         </div>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+
+            <div id="error-section" class="error" style="display: none; text-align: center; padding: 3rem;">
+                <h2>Detection Not Found</h2>
+                <p>The requested detection could not be found.</p>
+                <button class="btn btn-primary" onclick="window.location.href='history.html'">
+                    Go to History
+                </button>
+            </div>
+        </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/detection.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/detection.js"></script>
 </body>
 </html>

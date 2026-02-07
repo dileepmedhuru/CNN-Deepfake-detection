@@ -3,94 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - DeepFake Detector</title>
-    <link rel="stylesheet" href="/css/auth.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Sign Up - Deepfake Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
 </head>
 <body>
     <div class="auth-container">
-        <div class="auth-box">
+        <div class="auth-card">
             <div class="auth-header">
-                <i class="fas fa-user-plus logo-icon"></i>
-                <h1>Create Account</h1>
-                <p>Start detecting deepfakes today</p>
+                <h1>🔍 Deepfake Detector</h1>
+                <h2>Create Your Account</h2>
+                <p>Start detecting deepfakes with AI-powered analysis</p>
             </div>
-            
+
             <div id="error-message" class="error-message" style="display: none;"></div>
-            
+            <div id="success-message" class="success-message" style="display: none;"></div>
+
             <form id="signup-form" class="auth-form">
                 <div class="form-group">
-                    <label for="name">
-                        <i class="fas fa-user"></i> Full Name
-                    </label>
-                    <input 
-                        type="text" 
-                        id="name" 
-                        required 
-                        placeholder="Enter your full name"
-                        autocomplete="name"
-                    >
+                    <label for="full_name">Full Name</label>
+                    <input type="text" id="full_name" name="full_name" required placeholder="Enter your full name">
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="email">
-                        <i class="fas fa-envelope"></i> Email Address
-                    </label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        required 
-                        placeholder="Enter your email"
-                        autocomplete="email"
-                    >
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="password">
-                        <i class="fas fa-lock"></i> Password
-                    </label>
-                    <div class="password-input">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            required 
-                            placeholder="At least 6 characters"
-                            autocomplete="new-password"
-                        >
-                        <i class="fas fa-eye toggle-password" id="toggle-password" onclick="togglePassword('password', 'toggle-password')"></i>
-                    </div>
-                    <small class="form-hint">Password must be at least 6 characters</small>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                    <small class="form-hint">Must be 8+ characters with uppercase, lowercase, number and special character</small>
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="confirmPassword">
-                        <i class="fas fa-lock"></i> Confirm Password
-                    </label>
-                    <div class="password-input">
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            required 
-                            placeholder="Re-enter your password"
-                            autocomplete="new-password"
-                        >
-                        <i class="fas fa-eye toggle-password" id="toggle-confirm" onclick="togglePassword('confirmPassword', 'toggle-confirm')"></i>
-                    </div>
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
                 </div>
-                
-                <button type="submit" class="btn-primary btn-full">
-                    <i class="fas fa-user-plus"></i> Create Account
+
+                <button type="submit" class="btn btn-primary btn-block" id="signup-btn">
+                    <span id="btn-text">Sign Up</span>
+                    <span id="btn-loader" class="loader" style="display: none;"></span>
                 </button>
             </form>
-            
+
             <div class="auth-footer">
-                <p>Already have an account? <a href="/login.html">Login</a></p>
-                <p><a href="/index.html">← Back to Home</a></p>
+                <p>Already have an account? <a href="login.html">Login here</a></p>
             </div>
         </div>
     </div>
-    
-    <script src="/js/config.js"></script>
-    <script src="/js/auth.js"></script>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

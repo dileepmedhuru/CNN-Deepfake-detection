@@ -3,115 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detection History - DeepFake Detector</title>
-    <link rel="stylesheet" href="/css/dashboard.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Detection History - Deepfake Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <i class="fas fa-shield-alt"></i>
-                <span>DeepFake Detector</span>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>🔍 Deepfake Detector</h1>
             </div>
-            <nav class="sidebar-nav">
-                <a href="/dashboard.html" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/upload.html" class="nav-item">
-                    <i class="fas fa-upload"></i>
-                    <span>Upload & Detect</span>
-                </a>
-                <a href="/history.html" class="nav-item active">
-                    <i class="fas fa-history"></i>
-                    <span>History</span>
-                </a>
-                <a href="#" class="nav-item" onclick="handleLogout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </nav>
-        </aside>
+            <div class="nav-links">
+                <span id="user-name" class="user-name"></span>
+                <a href="dashboard.html">Dashboard</a>
+                <a href="upload.html">New Detection</a>
+                <a href="history.html" class="active">History</a>
+                <button onclick="logout()" class="btn btn-sm">Logout</button>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="dashboard-header">
+    <div class="dashboard-container">
+        <div class="container">
+            <div class="dashboard-header">
                 <h1>Detection History</h1>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span id="user-name">Loading...</span>
-                </div>
-            </header>
+                <p>View all your past detections</p>
+            </div>
 
-            <!-- History Section -->
-            <section class="history-section">
-                <div class="history-header">
-                    <h2><i class="fas fa-list"></i> All Detections</h2>
-                    <div class="history-filters">
-                        <select id="filter-type" onchange="filterHistory()">
-                            <option value="all">All Types</option>
-                            <option value="image">Images Only</option>
-                            <option value="video">Videos Only</option>
-                        </select>
-                        <select id="filter-prediction" onchange="filterHistory()">
-                            <option value="all">All Results</option>
-                            <option value="fake">Fake Only</option>
-                            <option value="real">Real Only</option>
-                        </select>
-                    </div>
-                </div>
+            <div class="history-filters">
+                <select id="filter-type" class="filter-select">
+                    <option value="all">All Types</option>
+                    <option value="image">Images Only</option>
+                    <option value="video">Videos Only</option>
+                </select>
+                <select id="filter-result" class="filter-select">
+                    <option value="all">All Results</option>
+                    <option value="real">Real Only</option>
+                    <option value="fake">Fake Only</option>
+                </select>
+            </div>
 
-                <div class="history-table-container">
-                    <table class="history-table">
-                        <thead>
-                            <tr>
-                                <th>File Name</th>
-                                <th>Type</th>
-                                <th>Prediction</th>
-                                <th>Confidence</th>
-                                <th>Processing Time</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-tbody">
-                            <tr class="loading-row">
-                                <td colspan="7" class="text-center">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading history...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div id="history-list" class="history-list">
+                <div class="loading">Loading history...</div>
+            </div>
 
-                <!-- Pagination -->
-                <div id="pagination" class="pagination" style="display: none;">
-                    <button id="prev-btn" class="page-btn" onclick="previousPage()">
-                        <i class="fas fa-chevron-left"></i> Previous
-                    </button>
-                    <span id="page-info">Page 1 of 1</span>
-                    <button id="next-btn" class="page-btn" onclick="nextPage()">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-
-                <!-- Empty State -->
-                <div id="empty-state" class="empty-state" style="display: none;">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Detections Yet</h3>
-                    <p>Start by uploading your first file for analysis</p>
-                    <a href="/upload.html" class="btn-primary">
-                        <i class="fas fa-upload"></i> Upload File
-                    </a>
-                </div>
-            </section>
-        </main>
+            <div id="load-more-container" style="text-align: center; margin-top: 2rem; display: none;">
+                <button id="load-more-btn" class="btn btn-secondary">Load More</button>
+            </div>
+        </div>
     </div>
 
-    <script src="/js/config.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/history.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/history.js"></script>
 </body>
 </html>

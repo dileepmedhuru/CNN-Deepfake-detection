@@ -1,3 +1,7 @@
+"""
+SIMPLIFIED Security utilities - NO PASSWORD HASHING
+Session-based authentication only
+"""
 from functools import wraps
 from flask import session, redirect, url_for, jsonify, request
 from models.user import User
@@ -10,7 +14,7 @@ def login_required(f):
             # If AJAX request, return JSON error
             if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'error': 'Authentication required', 'redirect': '/login.html'}), 401
-            return redirect(url_for('auth.login_page'))
+            return redirect('/login.html')
         return f(*args, **kwargs)
     return decorated_function
 

@@ -1,0 +1,75 @@
+Forgery_detection/
+│
+├── .env                                    # Environment variables (optional)
+├── .gitignore                              # Git ignore rules
+├── README.md                               # Project documentation
+├── setup.py                                # Database initialization script
+│
+├── Celeb-DF-v1/                           # Original dataset (NOT in git)
+│   ├── Celeb-real/                        # Real celebrity videos
+│   ├── Celeb-synthesis/                   # Fake/synthesized videos
+│   └── YouTube-real/                      # Real YouTube videos
+│
+├── processed_dataset/                      # Preprocessed frames (NOT in git)
+│   ├── train/
+│   │   ├── fake/                          # Training fake images
+│   │   └── real/                          # Training real images
+│   ├── validation/
+│   │   ├── fake/                          # Validation fake images
+│   │   └── real/                          # Validation real images
+│   └── test/
+│       ├── fake/                          # Test fake images
+│       └── real/                          # Test real images
+│
+├── database/
+│   ├── schema.sql                         # Database schema definition
+│   └── deepfake.db                        # SQLite database (auto-created)
+│
+├── backend/
+│   ├── app.py                             # Main Flask application
+│   ├── config.py                          # Configuration settings
+│   ├── database.py                        # Database connection
+│   ├── models.py                          # Database models (User, Detection)
+│   ├── utils.py                           # Helper functions
+│   │
+│   ├── auth_routes.py                     # Authentication endpoints
+│   ├── detection_routes.py               # Detection endpoints
+│   ├── admin_routes.py                    # Admin endpoints
+│   │
+│   ├── requirements.txt                   # Python dependencies
+│   │
+│   ├── data_preprocessing.py              # Frame extraction script
+│   ├── train_model.py                     # CNN training script
+│   ├── evaluate_model.py                  # Model evaluation script
+│   │
+│   └── uploads/                           # User uploaded files (auto-created)
+│       ├── images/                        # Uploaded images
+│       └── videos/                        # Uploaded videos
+│
+├── frontend/
+│   ├── index.html                         # Landing page
+│   ├── login.html                         # User login page
+│   ├── signup.html                        # User registration page
+│   ├── admin-login.html                   # Admin login page
+│   ├── dashboard.html                     # User dashboard
+│   ├── upload.html                        # Upload & analyze page
+│   ├── results.html                       # Detection results page
+│   ├── history.html                       # Detection history page
+│   ├── admin-dashboard.html               # Admin dashboard
+│   │
+│   ├── css/
+│   │   ├── style.css                      # Main styles
+│   │   ├── auth.css                       # Authentication page styles
+│   │   ├── dashboard.css                  # Dashboard styles
+│   │   └── admin.css                      # Admin panel styles
+│   │
+│   └── js/
+│       ├── config.js                      # API configuration
+│       ├── auth.js                        # Authentication logic
+│       ├── upload.js                      # File upload logic
+│       ├── detection.js                   # Detection results logic
+│       ├── history.js                     # History page logic
+│       └── admin.js                       # Admin panel logic
+│
+└── ml_models/
+    └── cnn_model.h5                       # Trained CNN model (created after training)
